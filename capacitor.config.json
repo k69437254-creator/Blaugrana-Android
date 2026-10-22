@@ -1,0 +1,8 @@
+{
+  "appId": "com.aram.blaugrana",
+  "appName": "Blaugrana",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
