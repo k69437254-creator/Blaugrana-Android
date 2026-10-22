@@ -17,8 +17,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      
       - name: Extract project
         run: unzip -q Blaugrana-Android-Project.zip
+
+      - name: Include updated Firebase app
+        run: cp -f www/index.html Blaugrana-Android/www/index.html
 
       - name: Setup Node
         uses: actions/setup-node@v4
