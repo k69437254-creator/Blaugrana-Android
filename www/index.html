@@ -1615,6 +1615,136 @@ go(curId);
   console.log("Blaugrana Firebase initialized");
 })();
 </script>
-
+-->
+<style>
+#bg-auth-shade{position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;padding:20px;direction:rtl;font-family:inherit}
+#bg-auth-card{width:min(100%,420px);background:var(--card,#fff);color:var(--ink,#111);border:1px solid var(--line,#ddd);border-radius:22px;padding:24px;box-shadow:0 18px 70px #0005}
+#bg-auth-card h2{margin:0 0 8px;font-size:24px}
+#bg-auth-card p{margin:0 0 18px;color:var(--mut,#777);line-height:1.7}
+#bg-auth-card input{display:block;width:100%;box-sizing:border-box;margin:10px 0;padding:14px;border:1px solid var(--line,#ddd);border-radius:12px;background:var(--s1,#fff);color:var(--ink,#111);font:inherit;outline:none}
+.bg-auth-btn{width:100%;border:0;border-radius:12px;padding:13px;margin-top:9px;font:inherit;font-weight:700;cursor:pointer}
+#bg-auth-submit{background:var(--acc,#0095f6);color:white}
+#bg-auth-toggle,#bg-auth-forgot{background:transparent;color:var(--acc,#0095f6)}
+#bg-auth-guest{background:var(--s2,#f5f5f5);color:var(--ink,#111)}
+#bg-auth-message{font-size:13px;min-height:20px;margin-top:10px;overflow-wrap:anywhere}
+#bg-auth-open{position:fixed;z-index:99998;bottom:22px;left:16px;border:0;border-radius:999px;padding:11px 15px;background:#0866ff;color:white;font:inherit;font-weight:700;box-shadow:0 4px 18px #0003}
+</style>
+<div id="bg-auth-shade" role="dialog" aria-modal="true" aria-labelledby="bg-auth-title">
+  <div id="bg-auth-card">
+    <h2 id="bg-auth-title">أهلًا بك في Blaugrana</h2>
+    <p id="bg-auth-subtitle">سجّل دخولك أو أنشئ حسابًا جديدًا.</p>
+    <form id="bg-auth-form">
+      <input id="bg-auth-email" type="email" autocomplete="email" placeholder="البريد الإلكتروني" required>
+      <input id="bg-auth-password" type="password" autocomplete="current-password" placeholder="كلمة المرور (6 أحرف على الأقل)" minlength="6" required>
+      <button class="bg-auth-btn" id="bg-auth-submit" type="submit">تسجيل الدخول</button>
+    </form>
+    <button class="bg-auth-btn" id="bg-auth-toggle" type="button">إنشاء حساب جديد</button>
+    <button class="bg-auth-btn" id="bg-auth-forgot" type="button">نسيت كلمة المرور؟</button>
+    <button class="bg-auth-btn" id="bg-auth-guest" type="button">المتابعة كزائر</button>
+    <div id="bg-auth-message" aria-live="polite"></div>
+  </div>
+</div>
+<button id="bg-auth-open" type="button" style="display:none">تسجيل الدخول</button>
+<script>
+(function(){
+  'use strict';
+  var shade=document.getElementById('bg-auth-shade');
+  var form=document.getElementById('bg-auth-form');
+  var email=document.getElementById('bg-auth-email');
+  var password=document.getElementById('bg-auth-password');
+  var submit=document.getElementById('bg-auth-submit');
+  var toggle=document.getElementById('bg-auth-toggle');
+  var forgot=document.getElementById('bg-auth-forgot');
+  var guest=document.getElementById('bg-auth-guest');
+  var openBtn=document.getElementById('bg-auth-open');
+  var message=document.getElementById('bg-auth-message');
+  var subtitle=document.getElementById('bg-auth-subtitle');
+  var createMode=false;
+  function say(t){message.textContent=t||'';}
+  function open(){shade.style.display='flex';say('');}
+  function close(){shade.style.display='none';}
+  function updateMode(){
+    submit.textContent=createMode?'إنشاء الحساب':'تسجيل الدخول';
+    toggle.textContent=createMode?'لديك حساب؟ تسجيل الدخول':'إنشاء حساب جديد';
+    subtitle.textContent=createMode?'أنشئ حسابًا بالبريد الإلكتروني وكلمة المرور.':'سجّل دخولك أو أنشئ حسابًا جديدًا.';
+    password.autocomplete=createMode?'new-password':'current-password';
+    say('');
+  }
+  function auth(){
+    if(window.blaugranaFirebase && window.blaugranaFirebase.auth) return window.blaugranaFirebase.auth;
+    if(window.firebase && firebase.auth) return firebase.auth();
+    return null;
+  }
+  function signedIn(user){
+    if(user){
+      close();
+      openBtn.style.display='block';
+      openBtn.textContent='الحساب';
+      openBtn.onclick=function(){
+        var a=auth();
+        if(a && a.currentUser){
+          if(confirm('هل تريد تسجيل الخروج؟')) a.signOut().then(function(){localStorage.removeItem('bg-auth-guest');open();}).catch(function(e){alert(e.message);});
+        } else open();
+      };
+    } else {
+      openBtn.style.display='block';
+      openBtn.textContent='تسجيل الدخول';
+      openBtn.onclick=open;
+      if(localStorage.getItem('bg-auth-guest')!=='1') open();
+    }
+  }
+  toggle.addEventListener('click',function(){createMode=!createMode;updateMode();});
+  guest.addEventListener('click',function(){
+    localStorage.setItem('bg-auth-guest','1');close();
+  });
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    var a=auth(),em=email.value.trim(),pw=password.value;
+    if(!a){say('تعذّر الاتصال بخدمة تسجيل الدخول. تأكد من تحميل Firebase في الصفحة.');return;}
+    if(!em || pw.length<6){say('أدخل بريدًا صحيحًا وكلمة مرور من 6 أحرف على الأقل.');return;}
+    submit.disabled=true;say('جارٍ التنفيذ...');
+    var task=createMode?a.createUserWithEmailAndPassword(em,pw):a.signInWithEmailAndPassword(em,pw);
+    task.then(function(cred){
+      localStorage.removeItem('bg-auth-guest');
+      if(createMode && window.blaugranaFirebase.db){
+        return window.blaugranaFirebase.db.collection('users').doc(cred.user.uid)
+          .collection('private').doc('profile').set({email:em,createdAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})
+          .catch(function(){/* الحساب أُنشئ؛ فشل حفظ الملف لا يمنع الدخول */});
+      }
+    }).then(function(){say('تم بنجاح');}).catch(function(err){
+      var messages={
+        'auth/email-already-in-use':'هذا البريد مسجّل مسبقًا. جرّب تسجيل الدخول.',
+        'auth/invalid-email':'صيغة البريد الإلكتروني غير صحيحة.',
+        'auth/weak-password':'كلمة المرور ضعيفة؛ استخدم 6 أحرف على الأقل.',
+        'auth/user-not-found':'لا يوجد حساب بهذا البريد.',
+        'auth/wrong-password':'كلمة المرور غير صحيحة.',
+        'auth/invalid-credential':'البريد أو كلمة المرور غير صحيحة.',
+        'auth/too-many-requests':'محاولات كثيرة؛ انتظر قليلًا ثم حاول مجددًا.'
+      };
+      say(messages[err.code]||('تعذّر إكمال العملية: '+(err.message||err.code||'خطأ غير معروف')));
+    }).finally(function(){submit.disabled=false;});
+  });
+  forgot.addEventListener('click',function(){
+    var a=auth(),em=email.value.trim();
+    if(!a){say('خدمة تسجيل الدخول غير جاهزة.');return;}
+    if(!em){say('اكتب بريدك الإلكتروني أولًا.');email.focus();return;}
+    a.sendPasswordResetEmail(em).then(function(){say('أرسلنا رابط استعادة كلمة المرور إلى بريدك إذا كان مسجلًا.');})
+      .catch(function(err){say(err.code==='auth/invalid-email'?'صيغة البريد غير صحيحة.':'تعذّر إرسال رابط الاستعادة. تحقق من البريد وحاول مجددًا.');});
+  });
+  var attempts=0;
+  var timer=setInterval(function(){
+    attempts++;
+    var a=auth();
+    if(a){
+      clearInterval(timer);
+      a.onAuthStateChanged(signedIn);
+    } else if(attempts>=30){
+      clearInterval(timer);
+      say('لم يتم العثور على Firebase Auth. تأكد أن هذا المقطع يأتي بعد كود تهيئة Firebase.');
+      open();
+    }
+  },250);
+})();
+</script>
 </body>
 </html>
