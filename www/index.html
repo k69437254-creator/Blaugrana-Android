@@ -1588,5 +1588,33 @@ go(curId);
 
 })();
 </script>
+  
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+(function () {
+  var firebaseConfig = {
+    apiKey: "AIzaSyBqhj2NT9Z9hJSWlV5cMMosvUwsz-6Yed30",
+    authDomain: "blaugrana-db0bc.firebaseapp.com",
+    projectId: "blaugrana-db0bc",
+    storageBucket: "blaugrana-db0bc.firebasestorage.app",
+    messagingSenderId: "623200735102",
+    appId: "1:623200735102:web:592192a6638e7f60cdad2f"
+  };
+
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+
+  window.blaugranaFirebase = {
+    auth: firebase.auth(),
+    db: firebase.firestore()
+  };
+
+  console.log("Blaugrana Firebase initialized");
+})();
+</script>
+
 </body>
 </html>
