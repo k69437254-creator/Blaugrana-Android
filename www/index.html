@@ -1665,11 +1665,11 @@ go(curId);
 
         var comp = m.competition || m.tournament || m.league || "";
         if (typeof comp === "object")
-          comp = comp.name || comp.title || "";
+  comp = comp.name || comp.title || comp.slug || comp.short_name || comp.abbreviation || "";
 
         var code = /champions league/i.test(String(comp))
           ? "UCL"
-          : /la liga|spanish league|primera/i.test(String(comp))
+          : /la\s*liga|spanish league|primera/i.test(String(comp))
           ? "LL"
           : "";
 
