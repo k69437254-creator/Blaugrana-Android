@@ -1606,7 +1606,110 @@ rset=function(){var o=$("stb");o.innerHTML="";o.appendChild(h("div","eb","الت
 var _tu11=topUpd;topUpd=function(id){_tu11(id)};
 go(curId);
 
+
+/* Barcelona fixtures API — local schedule remains as fallback */
+(function () {
+  var originalCAL = CAL.slice();
+
+  function loadBarcelonaFixtures() {
+    var dates = [];
+
+    for (var i = 0; i < 15; i++) {
+      var d = new Date();
+      d.setUTCDate(d.getUTCDate() + i);
+      dates.push(d.toISOString().slice(0, 10));
+    }
+
+    Promise.all(dates.map(function (date) {
+      var url =
+        "https://sportscore.com/api/v1/fixtures/?" +
+        "sport=football&date=" + date +
+        "&team=fc-barcelona&limit=100";
+
+      return fetch(url)
+        .then(function (r) {
+          if (!r.ok) throw new Error("API error");
+          return r.json();
+        })
+        .then(function (j) {
+          var rows = Array.isArray(j) ? j :
+            (j.matches || j.fixtures || j.data || j.results || []);
+          return Array.isArray(rows) ? rows : [];
+        })
+        .catch(function () {
+          return [];
+        });
+    })).then(function (groups) {
+      var rows = [].concat.apply([], groups);
+      if (!rows.length) return;
+
+      var updated = originalCAL.slice();
+      var changed = false;
+
+      rows.forEach(function (m) {
+        var home = m.home;
+        var away = m.away;
+        var time = m.time || m.start_at ||
+          m.start_time || m.date || m.datetime;
+
+        if (home && typeof home === "object")
+          home = home.name || home.title || "";
+        if (away && typeof away === "object")
+          away = away.name || away.title || "";
+
+        if (!home || !away || !time) return;
+
+        var isHome = /barcelona/i.test(String(home));
+        var isAway = /barcelona/i.test(String(away));
+        if (!isHome && !isAway) return;
+
+        var comp = m.competition || m.tournament || m.league || "";
+        if (typeof comp === "object")
+          comp = comp.name || comp.title || "";
+
+        var code = /champions league/i.test(String(comp))
+          ? "UCL"
+          : /la liga|spanish league|primera/i.test(String(comp))
+          ? "LL"
+          : "";
+
+        if (!code) return;
+
+        var matchTime = new Date(time);
+        if (isNaN(matchTime.getTime())) return;
+        if (matchTime.getTime() < Date.now() - 7200000) return;
+
+        var opponent = String(isHome ? away : home);
+
+        updated = updated.filter(function (old) {
+          return !(old.o === opponent && !old.s &&
+            Math.abs(new Date(old.t).getTime() -
+              matchTime.getTime()) < 86400000);
+        });
+
+        updated.push({
+          c: code,
+          h: isHome ? 1 : 0,
+          o: opponent,
+          t: matchTime.toISOString()
+        });
+
+        changed = true;
+      });
+
+      if (changed) {
+        CAL = updated;
+        try {
+          renderMatches();
+          stories();
+        } catch (e) {}
+      }
+    }).catch(function () {});
+  }
+
+  loadBarcelonaFixtures();
 })();
+
 </script>
   
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
