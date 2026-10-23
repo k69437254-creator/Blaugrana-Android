@@ -1607,108 +1607,128 @@ var _tu11=topUpd;topUpd=function(id){_tu11(id)};
 go(curId);
 
 
+
 /* Barcelona fixtures API — local schedule remains as fallback */
 (function () {
   var originalCAL = CAL.slice();
 
   function loadBarcelonaFixtures() {
-    var dates = [];
+    var url =
+      "https://sportscore.com/api/widget/team/" +
+      "?sport=football&slug=barcelona&limit=30";
 
-    for (var i = 0; i < 15; i++) {
-      var d = new Date();
-      d.setUTCDate(d.getUTCDate() + i);
-      dates.push(d.toISOString().slice(0, 10));
-    }
+    fetch(url)
+      .then(function (r) {
+        if (!r.ok) {
+          throw new Error("SportScore HTTP " + r.status);
+        }
+        return r.json();
+      })
+      .then(function (j) {
+        var rows = Array.isArray(j)
+          ? j
+          : (j.matches || j.fixtures || j.data || []);
 
-    Promise.all(dates.map(function (date) {
-      var url =
-        "https://sportscore.com/api/v1/fixtures/?" +
-        "sport=football&date=" + date +
-        "&team=barcelona&limit=100";
+        if (!Array.isArray(rows)) {
+          throw new Error("Unexpected SportScore response");
+        }
 
-      return fetch(url)
-        .then(function (r) {
-          if (!r.ok) throw new Error("API error");
-          return r.json();
-        })
-        .then(function (j) {
-          var rows = Array.isArray(j) ? j :
-            (j.matches || j.fixtures || j.data || j.results || []);
-          return Array.isArray(rows) ? rows : [];
-        })
-        .catch(function () {
-          return [];
+        console.log("SportScore matches received:", rows.length);
+
+        var updated = originalCAL.slice();
+        var changed = false;
+
+        rows.forEach(function (m) {
+          var home = m.home || m.home_team || m.homeTeam;
+          var away = m.away || m.away_team || m.awayTeam;
+
+          var time =
+            m.time || m.start_at || m.start_time ||
+            m.date || m.datetime || m.kickoff;
+
+          if (home && typeof home === "object") {
+            home = home.name || home.title || "";
+          }
+
+          if (away && typeof away === "object") {
+            away = away.name || away.title || "";
+          }
+
+          if (!home || !away || !time) return;
+
+          var isHome = /barcelona/i.test(String(home));
+          var isAway = /barcelona/i.test(String(away));
+
+          if (!isHome && !isAway) return;
+
+          var comp =
+            m.competition || m.tournament ||
+            m.league || m.competition_name || "";
+
+          if (typeof comp === "object") {
+            comp =
+              comp.name || comp.title || comp.slug ||
+              comp.short_name || comp.abbreviation || "";
+          }
+
+          comp = String(comp);
+
+          var code = /champions league|uefa champions/i.test(comp)
+            ? "UCL"
+            : /la\s*liga|spanish league|primera/i.test(comp)
+            ? "LL"
+            : "";
+
+          if (!code) return;
+
+          var matchTime = new Date(time);
+
+          if (isNaN(matchTime.getTime())) return;
+          if (matchTime.getTime() < Date.now() - 7200000) return;
+
+          var opponent = String(isHome ? away : home);
+
+          updated = updated.filter(function (old) {
+            var oldTime = new Date(old.t).getTime();
+
+            return !(
+              !old.s &&
+              old.c === code &&
+              Math.abs(oldTime - matchTime.getTime()) < 3 * 3600000
+            );
+          });
+
+          updated.push({
+            c: code,
+            h: isHome ? 1 : 0,
+            o: opponent,
+            t: matchTime.toISOString()
+          });
+
+          changed = true;
         });
-    })).then(function (groups) {
-      var rows = [].concat.apply([], groups);
-      if (!rows.length) return;
 
-      var updated = originalCAL.slice();
-      var changed = false;
+        if (changed) {
+          CAL = updated;
 
-      rows.forEach(function (m) {
-        var home = m.home;
-        var away = m.away;
-        var time = m.time || m.start_at ||
-          m.start_time || m.date || m.datetime;
-
-        if (home && typeof home === "object")
-          home = home.name || home.title || "";
-        if (away && typeof away === "object")
-          away = away.name || away.title || "";
-
-        if (!home || !away || !time) return;
-
-        var isHome = /barcelona/i.test(String(home));
-        var isAway = /barcelona/i.test(String(away));
-        if (!isHome && !isAway) return;
-
-        var comp = m.competition || m.tournament || m.league || "";
-        if (typeof comp === "object")
-  comp = comp.name || comp.title || comp.slug || comp.short_name || comp.abbreviation || "";
-
-        var code = /champions league/i.test(String(comp))
-          ? "UCL"
-          : /la\s*liga|spanish league|primera/i.test(String(comp))
-          ? "LL"
-          : "";
-
-        if (!code) return;
-
-        var matchTime = new Date(time);
-        if (isNaN(matchTime.getTime())) return;
-        if (matchTime.getTime() < Date.now() - 7200000) return;
-
-        var opponent = String(isHome ? away : home);
-
-        updated = updated.filter(function (old) {
-          return !(old.o === opponent && !old.s &&
-            Math.abs(new Date(old.t).getTime() -
-              matchTime.getTime()) < 86400000);
-        });
-
-        updated.push({
-          c: code,
-          h: isHome ? 1 : 0,
-          o: opponent,
-          t: matchTime.toISOString()
-        });
-
-        changed = true;
+          try {
+            renderMatches();
+            stories();
+          } catch (e) {
+            console.error("Blaugrana render error:", e);
+          }
+        } else {
+          console.warn(
+            "SportScore returned no usable Barcelona fixtures."
+          );
+        }
+      })
+      .catch(function (e) {
+        console.error("Blaugrana fixtures API error:", e);
       });
-
-      if (changed) {
-        CAL = updated;
-        try {
-          renderMatches();
-          stories();
-        } catch (e) {}
-      }
-    }).catch(function () {});
   }
 
   loadBarcelonaFixtures();
-})();
 })();
 
 </script>
