@@ -641,11 +641,12 @@ var SQ=[[1,"جوان غارسيا","GK","حارس مرمى","🇪🇸",25,0,0],[
 [9,"غابرييل جيسوس","FW","مهاجم","🇧🇷",29,0,1],[10,"لامين يامال","FW","جناح أيمن","🇪🇸",19,1,0],[11,"رافينيا","FW","جناح أيسر","🇧🇷",29,0,0],[14,"كريم أديمي","FW","جناح أيمن","🇩🇪",24,0,1],[17,"أنتوني غوردون","FW","جناح أيسر","🏴󠁧󠁢󠁥󠁮󠁧󠁿",25,0,1],[19,"روني بردغجي","FW","جناح أيمن","🇸🇪",20,0,0],[27,"جيسي بيسيوو","FW","جناح أيسر","🇧🇪",18,0,1],[29,"حمزة عبد الكريم","FW","مهاجم","🇪🇬",18,0,1]];
 var BY={};SQ.forEach(function(p){BY[p[0]]=p});
 var POS={"all":"الكل","GK":"الحراس","DF":"الدفاع","MF":"الوسط","FW":"الهجوم"};
-var TBL=[["برشلونة",8,0,0,24],["أتلتيكو مدريد",6,1,1,19],["ريال بيتيس",6,1,1,19],["ريال مدريد",6,0,2,18],["إشبيلية",4,2,2,14],["ريال سوسيداد",4,1,3,13],["ألافيس",3,2,3,11],["ديبورتيفو",2,5,2,11],["سيلتا فيغو",1,5,2,8],["أتلتيك بلباو",2,2,2,8],["فياريال",2,2,4,8],["إسبانيول",2,2,4,8],["رايو فايكانو",2,2,3,8],["خيتافي",2,2,4,8],["راسينغ",2,2,4,8],["أوساسونا",2,2,4,8],["ليفانتي",1,4,3,7],["إلتشي",1,3,4,6],["فالنسيا",1,2,5,5],["مالقة",0,4,4,4]];
+var TBL=[["برشلونة",9,0,0,27,9,39,9,30],["أتلتيكو مدريد",7,1,1,22,9,19,8,11],["ريال مدريد",7,0,2,21,9,23,9,14],["ريال بيتيس",6,1,2,19,9,16,14,2],["ريال سوسيداد",5,1,3,16,9,17,17,0],["إشبيلية",4,2,3,14,9,14,16,-2],["ألافيس",3,3,4,12,10,14,11,3],["سيلتا فيغو",2,5,2,11,9,10,7,3],["ديبورتيفو",2,5,2,11,9,13,12,1],["أوساسونا",3,2,4,11,9,10,18,-8],["ليفانتي",2,4,3,10,9,15,17,-2],["فياريال",2,3,4,9,9,13,13,0],["أتلتيك بلباو",2,3,3,9,8,8,9,-1],["رايو فايكانو",2,3,3,9,8,12,17,-5],["خيتافي",2,3,4,9,9,5,11,-6],["إسبانيول",2,2,5,8,9,11,12,-1],["راسينغ",2,2,5,8,9,13,25,-12],["إلتشي",1,4,4,7,9,11,17,-6],["فالنسيا",1,3,5,6,9,6,15,-9],["مالقة",0,5,5,5,10,7,19,-12]];
 var RES=[["برشلونة","خيتافي",3,0,"10 أكتوبر"],["إشبيلية","برشلونة",1,3,"19 سبتمبر"],["برشلونة","راسينغ",7,2,"16 سبتمبر"],["ليفانتي","برشلونة",2,4,"13 سبتمبر"],["فالنسيا","برشلونة",0,5,"6 سبتمبر"]];
 var FIX=[["ريال بيتيس",0,"2026-10-17T16:30:00Z"],["ريال مدريد",1,"2026-10-25T20:00:00Z"],["ألافيس",1,"2026-10-31T20:00:00Z"],["أتلتيكو مدريد",0,"2026-11-08T20:00:00Z"],["فياريال",1,"2026-11-22T19:00:00Z"]];
 function tm(n){for(var i=0;i<TBL.length;i++)if(TBL[i][0]===n)return {i:i+1,d:TBL[i]}}
 function ppg(t){return t[4]/(t[1]+t[2]+t[3])}
+function barcaTableRow(){return TBL.find(function(t){return t&&t[0]==="برشلونة"})||TBL[0]}
 var PH=ld("bh3_ph",{}),FV=ld("bh3_fv",[]);
 function fdt(iso){try{return new Date(iso).toLocaleString("ar-IQ",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}catch(e){return iso}}
 
@@ -685,7 +686,7 @@ TBL.slice(1).forEach(function(t,i){var o=h("option",null,t[0]);o.value=i+1;$("so
 var HOME=1;document.querySelectorAll("#sim .ch").forEach(function(b){b.onclick=function(){HOME=+b.dataset.v;document.querySelectorAll("#sim .ch").forEach(function(x){x.classList.toggle("on",x===b)})}});
 ["1","2","3","4","5"].forEach(function(i){$("r"+i).oninput=function(){$("v"+i).textContent=this.value}});
 function pois(l){var L=Math.exp(-l),k=0,p=1;do{k++;p*=Math.random()}while(p>L);return k-1}
-function lam(oi,home,f1,f2,i1,i2,fa){var sb=ppg(TBL[0]),so=ppg(TBL[oi]),d=sb-so;return [1.35*Math.exp(.22*d+.06*(f1-f2)-.05*i1+.05*i2-.04*fa)*(home?1.12:.92),1.1*Math.exp(-.22*d-.06*(f1-f2)+.05*i1-.05*i2+.03*fa)*(home?.9:1.1)]}
+function lam(oi,home,f1,f2,i1,i2,fa){var sb=ppg(barcaTableRow()),so=ppg(TBL[oi]),d=sb-so;return [1.35*Math.exp(.22*d+.06*(f1-f2)-.05*i1+.05*i2-.04*fa)*(home?1.12:.92),1.1*Math.exp(-.22*d-.06*(f1-f2)+.05*i1-.05*i2+.03*fa)*(home?.9:1.1)]}
 function donut(a,b,c){var C=2*Math.PI*40,s=a+b+c,o=0,x='<svg viewBox="0 0 100 100" width="150" height="150" style="transform:rotate(-90deg)">';[[a,"#3a86ff"],[b,"#9aa4c8"],[c,"#d6004f"]].forEach(function(p){var l=p[0]/s*C;x+='<circle cx="50" cy="50" r="40" fill="none" stroke="'+p[1]+'" stroke-width="14" stroke-dasharray="'+l+' '+(C-l)+'" stroke-dashoffset="'+(-o)+'"/>';o+=l});return x+'</svg>'}
 $("run").onclick=function(){var oi=+$("so").value,L=lam(oi,HOME,+$("r1").value,+$("r2").value,+$("r3").value,+$("r4").value,+$("r5").value),N=10000,w=0,d=0,l=0,sc={},xb=0,xo=0,on=TBL[oi][0];
  for(var i=0;i<N;i++){var a=pois(L[0]),b=pois(L[1]);xb+=a;xo+=b;if(a>b)w++;else if(a===b)d++;else l++;var k=a+"-"+b;sc[k]=(sc[k]||0)+1}
@@ -829,7 +830,7 @@ function rr(arrs){var o=[],i=0,go_=1;while(go_){go_=0;arrs.forEach(function(a){i
 function buildFeed(){var f=$("feed");f.innerHTML="";var nx=nextList(),rs=resList(),A=[],B=[],C=[],D=[],E=[];
  nx.slice(0,2).forEach(function(m){A.push({id:"n"+m.t,hd:"برشلونة",sub:CN[m.c],media:nextM(m),cap:"المباراة القادمة ضد "+m.o+" · "+(m.h?"على أرضنا":"خارج الأرض")})});
  rs.slice(0,4).forEach(function(m){A.push({id:"r"+m.t,hd:"برشلونة",sub:CN[m.c],media:resM(m),cap:"النتيجة النهائية: "+(m.h?"برشلونة "+m.s[0]+" - "+m.s[1]+" "+m.o:m.o+" "+m.s[1]+" - "+m.s[0]+" برشلونة")})});
- Object.keys(LG).forEach(function(k){B.push({id:"t"+k,hd:k,sub:"الترتيب",av:crest("#666"),media:tblM(k,LG[k],"برشلونة"),cap:k==="الليغا"?"برشلونة في الصدارة بـ 24 نقطة من 8 انتصارات.":"أعلى 8 فرق حالياً."})});
+ Object.keys(LG).forEach(function(k){B.push({id:"t"+k,hd:k,sub:"الترتيب",av:crest("#666"),media:tblM(k,LG[k],"برشلونة"),cap:k==="الليغا"?(function(){var b=TBL.find(function(t){return t[0]==="برشلونة"})||TBL[0];return "ترتيب الليغا المحدّث: "+b[4]+" نقطة من "+(b[1]+b[2]+b[3])+" مباريات."})():"أعلى الفرق حسب جدول الترتيب الحالي."})});
  ["رودري","أنتوني غوردون","كريم أديمي","غابرييل جيسوس"].forEach(function(n){var p=SQ.filter(function(q){return q[1]===n})[0],t=TI.filter(function(q){return q[0]===n})[0];C.push({id:"s"+p[0],hd:"صفقات برشلونة",sub:"صيف 2026",media:plM(p,"صفقة جديدة","من "+t[1]+" · "+t[2]),cap:"انضم "+n+" إلى الفريق."})});
  D.push({id:"poll",hd:"تصويت",sub:"للمشجعين",media:pollBox(),cap:"صوّت الآن."});D.push({id:"quiz"+Math.floor(Date.now()/864e5),hd:"اختبار",sub:"معلومات النادي",media:quizBox(),cap:"اختبر معلوماتك."});
  RL.slice(0,5).forEach(function(e,i){D.push({id:"f"+i,hd:"هل تعلم؟",sub:"برشلونة",media:factM(e[0],e[1],e[2]),cap:e[2]})});
@@ -856,7 +857,7 @@ var RL=[["🏆","29 لقب دوري","برشلونة بطل الليغا 29 مر
 
 
 /* استكشاف وأندية */
-function clubSheet(c){sheet(function(s){s.style.textAlign="center";s.insertAdjacentHTML("beforeend",crest(c.n==="برشلونة"?"url(#jr)":"#666",70));var t=h("h2",null,c.n);t.style.justifyContent="center";s.appendChild(t);s.appendChild(h("div","mut",c.lg));var d=h("div");d.style.textAlign="right";var g=c.t[1]+c.t[2]+c.t[3];[["المركز",(c.i+1)+" من "+c.L.length+(c.L.length<20&&c.lg!=="الليغا"?" (ضمن أعلى 10)":"")],["النقاط",c.t[4]],["فوز / تعادل / خسارة",c.t[1]+" / "+c.t[2]+" / "+c.t[3]],["نقاط كل مباراة",(c.t[4]/g).toFixed(2)],["مقارنة بنقاط برشلونة لكل مباراة",(c.t[4]/g-ppg(TBL[0])>0?"+":"")+(c.t[4]/g-ppg(TBL[0])).toFixed(2)]].forEach(function(x){d.appendChild(row(x[0],x[1]))});s.appendChild(d);
+function clubSheet(c){sheet(function(s){s.style.textAlign="center";s.insertAdjacentHTML("beforeend",crest(c.n==="برشلونة"?"url(#jr)":"#666",70));var t=h("h2",null,c.n);t.style.justifyContent="center";s.appendChild(t);s.appendChild(h("div","mut",c.lg));var d=h("div");d.style.textAlign="right";var g=c.t[1]+c.t[2]+c.t[3];[["المركز",(c.i+1)+" من "+c.L.length+(c.L.length<20&&c.lg!=="الليغا"?" (ضمن أعلى 10)":"")],["النقاط",c.t[4]],["فوز / تعادل / خسارة",c.t[1]+" / "+c.t[2]+" / "+c.t[3]],["نقاط كل مباراة",(c.t[4]/g).toFixed(2)],["مقارنة بنقاط برشلونة لكل مباراة",(c.t[4]/g-ppg(barcaTableRow())>0?"+":"")+(c.t[4]/g-ppg(barcaTableRow())).toFixed(2)]].forEach(function(x){d.appendChild(row(x[0],x[1]))});s.appendChild(d);
  var f=FL.indexOf(c.n)>-1,b=h("button","btn",f?"إلغاء المتابعة":"تابع النادي");b.onclick=function(){var i=FL.indexOf(c.n);if(i>-1)FL.splice(i,1);else FL.push(c.n);sv("bh4_fl",FL);$("sh").classList.remove("on");buildFeed();toast(i>-1?"أُلغيت المتابعة":"تمت المتابعة، سيظهر في صفحتك")};s.appendChild(b)})}
 $("xs").oninput=function(){var q=this.value.trim().toLowerCase(),o=$("xr");o.innerHTML="";if(!q)return;
  SQ.filter(function(p){return(p[1]+p[3]).toLowerCase().indexOf(q)>-1}).slice(0,6).forEach(function(p){var r=h("div","row"),l=h("span");l.style.cssText="display:flex;gap:10px;align-items:center";l.appendChild(av(p,40));l.appendChild(h("span",null,p[1]));r.appendChild(l);r.appendChild(h("span","mut",p[3]));r.style.cursor="pointer";r.onclick=function(){openP(p)};o.appendChild(r)});
@@ -933,7 +934,7 @@ function pSheet(p,tab){tab=tab||0;sheet(function(c){var hd=h("div");hd.style.css
 /* ===== المباريات (الرئيسية) ===== */
 var selD=null,MAPN={"باريس سان جيرمان":"PSG","مانشستر سيتي":"Man City","كومو":"Como"};
 function oppP(m){var t=tm(m.o);if(t)return ppg(t.d);var e=MAPN[m.o];if(e)for(var i=0;i<ALLC.length;i++)if(ALLC[i].n===e)return ALLC[i].t[4]/(ALLC[i].t[1]+ALLC[i].t[2]+ALLC[i].t[3]);return null}
-function mlam(m){var sb=ppg(TBL[0]),so=oppP(m)||1.6,d=sb-so;return[1.35*Math.exp(.22*d)*(m.h?1.12:.92),1.1*Math.exp(-.22*d)*(m.h?.9:1.1)]}
+function mlam(m){var sb=ppg(barcaTableRow()),so=oppP(m)||1.6,d=sb-so;return[1.35*Math.exp(.22*d)*(m.h?1.12:.92),1.1*Math.exp(-.22*d)*(m.h?.9:1.1)]}
 function pp(l,k){var r=Math.exp(-l);for(var i=1;i<=k;i++)r*=l/i;return r}
 function m3(L){var w=0,d=0,l=0;for(var a=0;a<9;a++)for(var b=0;b<9;b++){var p=pp(L[0],a)*pp(L[1],b);if(a>b)w+=p;else if(a===b)d+=p;else l+=p}var s=w+d+l;return[w/s*100,d/s*100,l/s*100]}
 function mrow(m){var r=h("div","mr");r.onclick=function(){mSheet(m,0)};var c=h("div","mc");c.appendChild(h("b",null,m.s?"FT":hm(m.t)));r.appendChild(c);var t=h("div","mt2"),N=m.h?["برشلونة",m.o]:[m.o,"برشلونة"];N.forEach(function(n,i){var d=h("div","tl2");d.appendChild(crc(n,n==="برشلونة"));d.appendChild(h("span",null,n));t.appendChild(d)});r.appendChild(t);var s=h("div","sc2");if(m.s){var hs=m.h?m.s[0]:m.s[1],as=m.h?m.s[1]:m.s[0],a=h("div",hs>as?"w":"",hs),b=h("div",as>hs?"w":"",as);s.appendChild(a);s.appendChild(b)}else s.appendChild(h("div",null,"—"));r.appendChild(s);return r}
@@ -1109,7 +1110,7 @@ rhome=function(){var ds=$("ds"),ml=$("mlist");ds.innerHTML="";ml.innerHTML="";va
   var cn=h("div","cdn");[["cd0","يوم"],["cd1","ساعة"],["cd2","دقيقة"],["cd3","ثانية"]].forEach(function(x){var d=h("div"),b=h("b","--");b.id=x[0];d.appendChild(b);d.appendChild(h("small",null,x[1]));cn.appendChild(d)});hc.appendChild(cn);
   var P=nx.p||m3(mlam(nx)).map(function(v){return Math.round(v*10)/10}),pb=h("div","pbar");[[P[0],"#fff"],[P[1],"rgba(255,255,255,.45)"],[P[2],"#ff6b8a"]].forEach(function(x){var i=h("i");i.style.width=x[0]+"%";i.style.background=x[1];pb.appendChild(i)});hc.appendChild(pb);var pl=h("div","pl3");pl.appendChild(h("span",null,"برشلونة "+P[0]+"%"));pl.appendChild(h("span",null,"تعادل "+P[1]+"%"));pl.appendChild(h("span",null,"الخصم "+P[2]+"%"));hc.appendChild(pl);
   var cp=crowdPred(nx.t);if(cp.n){var cw=h("div",null,"توقعات الجمهور: "+Math.round(cp.w/cp.n*100)+"% يرون فوز برشلونة ("+cp.n+" توقع)");cw.style.cssText="font-size:12px;margin-top:8px;opacity:.95";hc.appendChild(cw)}ml.appendChild(hc);cdLoop(nx.t)}
- var kp=h("div","kp");[[1,"المركز"],[TBL[0][4],"نقطة"],[(function(){var r=resList().slice(0,5),w=r.filter(function(m){return bres(m)==="W"}).length;return w+"/"+r.length})(),"فوز آخر 5"]].forEach(function(x){var d=h("div");d.appendChild(h("b",null,x[0]));d.appendChild(h("span",null,x[1]));kp.appendChild(d)});ml.appendChild(kp);
+ var kp=h("div","kp");[[Math.max(1,TBL.findIndex(function(t){return t[0]==="برشلونة"})+1),"المركز"],[barcaTableRow()[4],"نقطة"],[(function(){var r=resList().slice(0,5),w=r.filter(function(m){return bres(m)==="W"}).length;return w+"/"+r.length})(),"فوز آخر 5"]].forEach(function(x){var d=h("div");d.appendChild(h("b",null,x[0]));d.appendChild(h("span",null,x[1]));kp.appendChild(d)});ml.appendChild(kp);
  var day=CAL.filter(function(m){return dk(new Date(m.t))===selD}).sort(function(a,b){return new Date(a.t)-new Date(b.t)});
  if(!day.length)ml.appendChild(h("div","msg","لا مباريات لبرشلونة في هذا اليوم. اختر يوماً عليه نقطة."));else["LL","UCL"].forEach(function(k){var g=day.filter(function(m){return m.c===k});if(!g.length)return;var lh=h("div","lh");lh.appendChild(h("span",null,CN[k]));ml.appendChild(lh);var mg=h("div","mg");g.forEach(function(m){mg.appendChild(mrow(m))});ml.appendChild(mg)});
  ml.appendChild(h("div","eb","الأخبار"));var nc=h("div","card");if(!NEWS.length)nc.appendChild(h("div","msg","لا أخبار منشورة بعد. يضيفها محرر التطبيق من لوحة التحكم."));NEWS.slice(0,3).forEach(function(n){var d=h("div","dh");d.appendChild(h("b",null,n.t));if(n.x)d.appendChild(h("div","mut",n.x));d.appendChild(h("div","mut","المصدر: "+n.s));nc.appendChild(d)});ml.appendChild(nc);
@@ -1132,7 +1133,7 @@ function sub(p,fn){try{DBX.doc(p).onSnapshot(function(s){if(s.exists){fn(s.data(
 (async function(){DBX=await claude.use("db");UX=await claude.use("user");if(UX){try{ADMIN=!!(await UX.canEdit())}catch(e){}try{UID=await UX.id()}catch(e){}}rmn();if(!DBX){refresh();return}
  sub("core/squad",function(d){if(d.list&&d.list.length){SQ.length=0;d.list.forEach(function(x){SQ.push(x)});reBY();grid();pc();refresh()}});
   /* Matches are provided by SportScore, not the legacy manual/Firebase list. */
- sub("core/standings",function(d){if(d.la&&d.la.length){TBL.length=0;d.la.forEach(function(x){TBL.push(x)})}if(d.others)Object.keys(d.others).forEach(function(k){LG[k]=d.others[k]});ALLC.length=0;Object.keys(LG).forEach(function(k){LG[k].forEach(function(t,i){ALLC.push({n:t[0],lg:k,i:i,t:t,L:LG[k]})})});rlg();xc();refresh()});
+ sub("core/standings",function(d){if(window.__BLAUGRANA_LIVE_STANDINGS)return;if(d.la&&d.la.length){TBL.length=0;d.la.forEach(function(x){TBL.push(x)})}if(d.others)Object.keys(d.others).forEach(function(k){LG[k]=d.others[k]});ALLC.length=0;Object.keys(LG).forEach(function(k){LG[k].forEach(function(t,i){ALLC.push({n:t[0],lg:k,i:i,t:t,L:LG[k]})})});rlg();xc();refresh()});
  sub("core/transfers",function(d){if(d.ins){TI.length=0;d.ins.forEach(function(x){TI.push(x)})}if(d.outs){TO.length=0;d.outs.forEach(function(x){TO.push(x)})}refresh()});
  sub("core/news",function(d){NEWS=d.list||[];refresh()});sub("core/photos",function(d){DPH=d.map||{};grid();refresh()});sub("core/logos",function(d){LOGOS=d.map||{};stories();refresh()});sub("core/meta",function(d){META=d;refresh()});
  try{DBX.collection("votes").onSnapshot(function(sn){VOTES={};sn.docs.forEach(function(x){VOTES[x.id]=x.data()});refresh()},function(){})}catch(e){}
@@ -1843,6 +1844,220 @@ go(curId);
   loadMatches(); setInterval(loadMatches, 5 * 60 * 1000);
   document.addEventListener("visibilitychange", function () { if (!document.hidden && Date.now() - lastAttempt > 60000) loadMatches(); });
 })();
+})();
+
+
+/* ===== v16: live league standings (ESPN public standings API) ===== */
+(function () {
+  "use strict";
+  var CACHE_KEY = "bh16_live_standings_v1";
+  var STATUS = "جارٍ تحديث جدول الدوريات من المصدر المباشر…";
+  var UPDATED = null;
+  var BUSY = false;
+  /* The old Firebase standings snapshot is stale and must never replace the live table. */
+  window.__BLAUGRANA_LIVE_STANDINGS = true;
+
+  var LEAGUES = [
+    { key: "الليغا", slug: "esp.1" },
+    { key: "البريميرليغ", slug: "eng.1" },
+    { key: "السيري آ", slug: "ita.1" },
+    { key: "البوندسليغا", slug: "ger.1" },
+    { key: "الدوري الفرنسي", slug: "fra.1" }
+  ];
+  var LA_NAMES = {
+    "fc barcelona":"برشلونة", "barcelona":"برشلونة",
+    "atletico madrid":"أتلتيكو مدريد", "atlético de madrid":"أتلتيكو مدريد",
+    "real madrid":"ريال مدريد", "real betis":"ريال بيتيس",
+    "real sociedad":"ريال سوسيداد", "sevilla fc":"إشبيلية", "sevilla":"إشبيلية",
+    "deportivo alaves":"ألافيس", "deportivo alavés":"ألافيس", "alaves":"ألافيس",
+    "rc celta":"سيلتا فيغو", "celta":"سيلتا فيغو", "celta vigo":"سيلتا فيغو",
+    "rc deportivo":"ديبورتيفو", "deportivo":"ديبورتيفو", "ca osasuna":"أوساسونا", "osasuna":"أوساسونا",
+    "levante ud":"ليفانتي", "levante":"ليفانتي", "villarreal cf":"فياريال", "villarreal":"فياريال",
+    "athletic club":"أتلتيك بلباو", "athletic bilbao":"أتلتيك بلباو",
+    "rayo vallecano":"رايو فايكانو", "getafe cf":"خيتافي", "getafe":"خيتافي",
+    "rcd espanyol de barcelona":"إسبانيول", "espanyol":"إسبانيول", "rcd espanyol":"إسبانيول",
+    "racing santander":"راسينغ", "r. racing club":"راسينغ", "racing club de santander":"راسينغ",
+    "elche cf":"إلتشي", "elche":"إلتشي", "valencia cf":"فالنسيا", "valencia":"فالنسيا",
+    "malaga cf":"مالقة", "málaga cf":"مالقة", "malaga":"مالقة", "málaga":"مالقة"
+  };
+  function normName(v) {
+    return String(v || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ").trim();
+  }
+  function numeric(v) {
+    if (v == null || v === "") return NaN;
+    if (typeof v === "number") return isFinite(v) ? v : NaN;
+    var m = String(v).replace(/,/g, "").match(/-?\d+(?:\.\d+)?/);
+    return m ? Number(m[0]) : NaN;
+  }
+  function statsFor(entry) {
+    var out = {};
+    (Array.isArray(entry.stats) ? entry.stats : []).forEach(function (st) {
+      var keys = [st.name, st.type, st.abbreviation, st.abbrev, st.shortDisplayName, st.displayName].filter(Boolean);
+      keys.forEach(function (k) { out[normName(k).replace(/[ _-]+/g, "")] = st.value != null ? st.value : st.displayValue; });
+    });
+    return out;
+  }
+  function pick(st, names) {
+    for (var i = 0; i < names.length; i++) {
+      var k = normName(names[i]).replace(/[ _-]+/g, "");
+      if (st[k] != null) { var n = numeric(st[k]); if (isFinite(n)) return n; }
+    }
+    return NaN;
+  }
+  function collectEntries(json) {
+    var entries = [], seen = {};
+    function walk(node) {
+      if (!node) return;
+      if (Array.isArray(node)) { node.forEach(walk); return; }
+      if (typeof node !== "object") return;
+      if (node.team && Array.isArray(node.stats)) {
+        var team = node.team || {}, name = team.displayName || team.name || team.shortDisplayName || team.abbreviation;
+        var id = String(team.id || team.uid || name || "");
+        if (name && !seen[id]) { seen[id] = true; entries.push(node); }
+        return;
+      }
+      Object.keys(node).forEach(function (k) { walk(node[k]); });
+    }
+    walk(json);
+    return entries;
+  }
+  function makeRows(json, leagueKey) {
+    var entries = collectEntries(json), rows = [];
+    entries.forEach(function (entry) {
+      var team = entry.team || {}, rawName = team.displayName || team.name || team.shortDisplayName || team.abbreviation;
+      var st = statsFor(entry);
+      var wins = pick(st, ["wins", "win"]), draws = pick(st, ["ties", "draws", "draw", "tie"]), losses = pick(st, ["losses", "loss"]);
+      var points = pick(st, ["points", "pts"]), played = pick(st, ["gamesPlayed", "played", "matchesPlayed", "matches"]);
+      var gf = pick(st, ["pointsFor", "goalsFor", "goalFor", "gf"]), ga = pick(st, ["pointsAgainst", "goalsAgainst", "goalAgainst", "ga"]);
+      var gd = pick(st, ["pointDifferential", "goalDifference", "goalDiff", "gd"]), rank = pick(st, ["rank", "position", "standing"]);
+      if (!isFinite(wins) || !isFinite(draws) || !isFinite(losses)) {
+        var record = String(st.overall || st.record || "").match(/(\d+)\s*[-–]\s*(\d+)\s*[-–]\s*(\d+)/);
+        if (record) { wins = +record[1]; draws = +record[2]; losses = +record[3]; }
+      }
+      if (![wins, draws, losses].every(isFinite)) return;
+      if (!isFinite(played)) played = wins + draws + losses;
+      if (!isFinite(points)) points = wins * 3 + draws;
+      if (!isFinite(gf)) gf = 0;
+      if (!isFinite(ga)) ga = 0;
+      if (!isFinite(gd)) gd = gf - ga;
+      var label = rawName;
+      if (leagueKey === "الليغا") label = LA_NAMES[normName(rawName)] || rawName;
+      rows.push([label, wins, draws, losses, points, played, gf, ga, gd, isFinite(rank) ? rank : 999]);
+    });
+    if (rows.length < 10) throw new Error("بيانات الترتيب غير مكتملة: " + rows.length + " فريقًا");
+    rows.sort(function (a, b) {
+      if (a[9] !== 999 && b[9] !== 999 && a[9] !== b[9]) return a[9] - b[9];
+      return b[4] - a[4] || b[8] - a[8] || b[6] - a[6] || a[0].localeCompare(b[0]);
+    });
+    return rows;
+  }
+  function replaceRows(key, rows) {
+    if (key === "الليغا") {
+      TBL.length = 0;
+      rows.forEach(function (r) { TBL.push(r); });
+      LG["الليغا"] = TBL;
+    } else {
+      LG[key] = rows;
+    }
+  }
+  function rebuildAllClubs() {
+    ALLC.length = 0;
+    Object.keys(LG).forEach(function (key) {
+      (LG[key] || []).forEach(function (t, i) { ALLC.push({ n: t[0], lg: key, i: i, t: t, L: LG[key] }); });
+    });
+  }
+  function repopulateSelect(id, rows, selectedName) {
+    var sel = typeof $ === "function" ? $(id) : document.getElementById(id);
+    if (!sel) return;
+    sel.innerHTML = "";
+    rows.forEach(function (r, i) { var op = document.createElement("option"); op.value = i; op.textContent = r[0]; sel.appendChild(op); });
+    var ix = rows.findIndex(function (r) { return r[0] === selectedName; });
+    sel.value = String(ix >= 0 ? ix : 0);
+  }
+  function rebuildSelects() {
+    var oldX1 = $("x1") && ALLC[+$ ("x1").value] ? ALLC[+$ ("x1").value].n : "برشلونة";
+    var oldX2 = $("x2") && ALLC[+$ ("x2").value] ? ALLC[+$ ("x2").value].n : "Man City";
+    ["x1", "x2"].forEach(function (id, idx) {
+      var sel = $(id); if (!sel) return; sel.innerHTML = "";
+      ALLC.forEach(function (c, i) { var op = document.createElement("option"); op.value = i; op.textContent = c.n + " — " + c.lg; sel.appendChild(op); });
+      var desired = idx ? oldX2 : oldX1;
+      var ix = ALLC.findIndex(function (c) { return c.n === desired; });
+      sel.value = String(ix >= 0 ? ix : (idx ? Math.max(0, ALLC.findIndex(function(c){return c.n==="Man City";})) : 0));
+    });
+    var so = $("so"), oldSo = so && TBL[+so.value] ? TBL[+so.value][0] : "ريال مدريد";
+    if (so) { so.innerHTML = ""; TBL.forEach(function (r, i) { if (r[0] === "برشلونة") return; var op = document.createElement("option"); op.value = i; op.textContent = r[0]; so.appendChild(op); }); var ix = TBL.findIndex(function(r){return r[0]===oldSo;}); so.value = String(ix > 0 ? ix : Math.min(1, TBL.length - 1)); }
+    ["c1", "c2"].forEach(function(id, idx){var sel=$(id);if(!sel)return;var old=sel.options[sel.selectedIndex]&&sel.options[sel.selectedIndex].textContent;sel.innerHTML="";TBL.forEach(function(r,i){var op=document.createElement("option");op.value=i;op.textContent=r[0];sel.appendChild(op)});var ix=TBL.findIndex(function(r){return r[0]===old});sel.value=String(ix>=0?ix:(idx?3:0));});
+  }
+  function renderUpdated() {
+    rebuildAllClubs(); rebuildSelects();
+    try { if (typeof rlg === "function") rlg(); } catch (e) {}
+    try { if (typeof xc === "function") xc(); } catch (e) {}
+    try { if (typeof rbar === "function") rbar(); } catch (e) {}
+    try { if (typeof rhome === "function") rhome(); } catch (e) {}
+    try { if (typeof buildFeed === "function") buildFeed(); } catch (e) {}
+    try { if (typeof refresh === "function") refresh(); } catch (e) {}
+  }
+  function setStatus(message) {
+    STATUS = message;
+    try { if (typeof rlg === "function") rlg(); } catch (e) {}
+  }
+  var _oldRlg = rlg;
+  rlg = function () {
+    _oldRlg();
+    var o = $("lgt");
+    if (o) { var n = document.createElement("div"); n.className = "mut"; n.style.cssText = "text-align:center;padding:10px 12px;font-size:12px"; n.textContent = STATUS + (UPDATED ? " · آخر تحديث: " + new Date(UPDATED).toLocaleString("ar-IQ", { hour:"2-digit", minute:"2-digit", day:"numeric", month:"short" }) : ""); o.appendChild(n); }
+  };
+  function applyTables(tables, updated) {
+    var loaded = 0;
+    LEAGUES.forEach(function (lg) { if (tables[lg.key] && tables[lg.key].length >= 10) { replaceRows(lg.key, tables[lg.key]); loaded++; } });
+    if (!loaded) return false;
+    UPDATED = updated || Date.now();
+    window.__BLAUGRANA_LIVE_STANDINGS = true;
+    renderUpdated();
+    return true;
+  }
+  function cacheRead() {
+    try {
+      var c = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
+      if (c && c.tables && c.updated && Date.now() - c.updated < 36 * 60 * 60 * 1000) applyTables(c.tables, c.updated);
+    } catch (e) {}
+  }
+  async function loadLeague(lg) {
+    var url = "https://site.api.espn.com/apis/v2/sports/soccer/" + lg.slug + "/standings";
+    var controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+    var timer = controller ? setTimeout(function(){controller.abort()}, 12000) : null;
+    try {
+      var resp = await fetch(url, { method: "GET", cache: "no-store", signal: controller ? controller.signal : undefined });
+      if (!resp.ok) throw new Error("HTTP " + resp.status);
+      var json = await resp.json();
+      var rows = makeRows(json, lg.key);
+      return { key: lg.key, rows: rows };
+    } finally { if (timer) clearTimeout(timer); }
+  }
+  async function updateStandings() {
+    if (BUSY) return; BUSY = true;
+    try {
+      var results = await Promise.allSettled(LEAGUES.map(loadLeague));
+      var tables = {}, ok = 0;
+      results.forEach(function (r) { if (r.status === "fulfilled") { tables[r.value.key] = r.value.rows; ok++; } });
+      if (ok) {
+        var stamp = Date.now(); applyTables(tables, stamp);
+        try { localStorage.setItem(CACHE_KEY, JSON.stringify({ updated: stamp, tables: tables })); } catch (e) {}
+        setStatus("تحديث مباشر من ESPN · " + ok + " من " + LEAGUES.length + " دوريات");
+      } else {
+        setStatus(UPDATED ? "تعذّر الاتصال؛ يعرض التطبيق آخر جدول محفوظ" : "تعذّر الاتصال بالمصدر المباشر؛ الأرقام الأولية قديمة");
+      }
+    } catch (e) {
+      console.error("Standings update failed", e);
+      setStatus(UPDATED ? "تعذّر الاتصال؛ يعرض التطبيق آخر جدول محفوظ" : "تعذّر الاتصال بالمصدر المباشر؛ الأرقام الأولية قديمة");
+    } finally { BUSY = false; }
+  }
+  cacheRead();
+  setStatus("جارٍ تحديث جدول الدوريات…");
+  updateStandings();
+  setInterval(updateStandings, 15 * 60 * 1000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) updateStandings(); });
 })();
 
 </script>
