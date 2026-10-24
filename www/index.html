@@ -1618,11 +1618,11 @@ go(curId);
 /* ===== Barcelona fixtures: robust SportScore loader ===== */
 (function () {
   var API_URLS = [
-    "https://sportscore.com/api/widget/team/?sport=football&slug=barcelona&limit=30",
-    "https://sportscore.com/api/v1/team/?sport=football&slug=barcelona&limit=30"
+    "https://sportscore.com/api/widget/team/?sport=football&slug=fc-barcelona&limit=30",
+    "https://sportscore.com/api/v1/team/?sport=football&slug=fc-barcelona&limit=30"
   ];
   var busy = false, lastAttempt = 0, lastError = "";
-  var cached = ld("bh13_sportscore_matches", []);
+  var cached = ld("bh14_fcbarcelona_matches", []);
   if (Array.isArray(cached) && cached.length) CAL = cached;
 
   function valName(x) {
@@ -1713,7 +1713,7 @@ go(curId);
     if(busy)return; busy=true;lastAttempt=Date.now();
     fetchSource(0).then(function(result){
       CAL=result.matches;
-      sv("bh13_sportscore_matches",CAL);sv("bh12_sportscore_updated",result.updated);
+      sv("bh14_fcbarcelona_matches",CAL);sv("bh12_sportscore_updated",result.updated);
       lastError="";repaint();
     }).catch(function(e){
       console.error("SportScore fixtures error:",e);
