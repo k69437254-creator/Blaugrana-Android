@@ -2031,6 +2031,7 @@ go(curId);
       var resp = await fetch(url, { method: "GET", cache: "no-store", signal: controller ? controller.signal : undefined });
       if (!resp.ok) throw new Error("HTTP " + resp.status);
       var json = await resp.json();
+      if (typeof window.__BLAUGRANA_CACHE_TEAM_LOGOS === "function") window.__BLAUGRANA_CACHE_TEAM_LOGOS(json);
       var rows = makeRows(json, lg.key);
       return { key: lg.key, rows: rows };
     } finally { if (timer) clearTimeout(timer); }
@@ -2058,6 +2059,266 @@ go(curId);
   updateStandings();
   setInterval(updateStandings, 15 * 60 * 1000);
   document.addEventListener("visibilitychange", function () { if (!document.hidden) updateStandings(); });
+})();
+
+/* ===== v9: REAL CLUB LOGOS + REAL PLAYER PHOTOS ===== */
+(function () {
+  "use strict";
+  var MEDIA_KEY = "bh9_real_media_v1";
+  var MEDIA = ld(MEDIA_KEY, { teams: {}, players: {}, playerMiss: {} });
+  if (!MEDIA || typeof MEDIA !== "object") MEDIA = { teams: {}, players: {}, playerMiss: {} };
+  MEDIA.teams = MEDIA.teams || {}; MEDIA.players = MEDIA.players || {}; MEDIA.playerMiss = MEDIA.playerMiss || {};
+  var BARCA_CREST = "https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg";
+  var TEAM_ALIAS_RAW = {
+    "برشلونة":"Barcelona","Barcelona":"Barcelona","Barca":"Barcelona","Barça":"Barcelona",
+    "ريال مدريد":"Real Madrid","Real Madrid":"Real Madrid",
+    "أتلتيكو مدريد":"Atletico Madrid","Atletico Madrid":"Atletico Madrid","Atlético Madrid":"Atletico Madrid",
+    "ريال بيتيس":"Real Betis","Real Betis":"Real Betis","ريال سوسيداد":"Real Sociedad","Real Sociedad":"Real Sociedad",
+    "إشبيلية":"Sevilla","Sevilla":"Sevilla","ألافيس":"Deportivo Alaves","Alaves":"Deportivo Alaves","Deportivo Alaves":"Deportivo Alaves","Deportivo Alavés":"Deportivo Alaves",
+    "سيلتا فيغو":"Celta Vigo","Celta Vigo":"Celta Vigo","ديبورتيفو":"Deportivo La Coruna","Deportivo La Coruna":"Deportivo La Coruna","Deportivo de La Coruña":"Deportivo La Coruna",
+    "أوساسونا":"Osasuna","Osasuna":"Osasuna","ليفانتي":"Levante","Levante":"Levante","فياريال":"Villarreal","Villarreal":"Villarreal",
+    "أتلتيك بلباو":"Athletic Club","Athletic Club":"Athletic Club","Athletic Bilbao":"Athletic Club","رايو فايكانو":"Rayo Vallecano","Rayo Vallecano":"Rayo Vallecano",
+    "خيتافي":"Getafe","Getafe":"Getafe","إسبانيول":"Espanyol","Espanyol":"Espanyol","RCD Espanyol":"Espanyol",
+    "راسينغ":"Racing Santander","Racing Santander":"Racing Santander","Racing de Santander":"Racing Santander","إلتشي":"Elche","Elche":"Elche",
+    "فالنسيا":"Valencia","Valencia":"Valencia","مالقة":"Malaga","Malaga":"Malaga","Málaga":"Malaga",
+    "مانشستر سيتي":"Manchester City","Man City":"Manchester City","Manchester City":"Manchester City",
+    "باريس سان جيرمان":"Paris Saint-Germain","PSG":"Paris Saint-Germain","Paris Saint-Germain":"Paris Saint-Germain","Paris SG":"Paris Saint-Germain",
+    "Brighton":"Brighton and Hove Albion","Brighton & Hove Albion":"Brighton and Hove Albion","Brighton and Hove Albion":"Brighton and Hove Albion",
+    "Leeds":"Leeds United","Leeds United":"Leeds United","Ipswich":"Ipswich Town","Ipswich Town":"Ipswich Town",
+    "Inter":"Inter Milan","Inter Milan":"Inter Milan","Internazionale":"Inter Milan","AC Milan":"AC Milan","Milan":"AC Milan",
+    "Bayern":"Bayern Munich","Bayern Munich":"Bayern Munich","Dortmund":"Borussia Dortmund","Borussia Dortmund":"Borussia Dortmund",
+    "Leverkusen":"Bayer Leverkusen","Bayer Leverkusen":"Bayer Leverkusen","Leipzig":"RB Leipzig","RB Leipzig":"RB Leipzig",
+    "Frankfurt":"Eintracht Frankfurt","Eintracht Frankfurt":"Eintracht Frankfurt","Freiburg":"SC Freiburg","SC Freiburg":"SC Freiburg",
+    "Werder Bremen":"Werder Bremen","Mainz":"Mainz 05","Mainz 05":"Mainz 05","Monaco":"AS Monaco","AS Monaco":"AS Monaco",
+    "Lille":"Lille","Rennes":"Rennes","Lyon":"Lyon","Paris FC":"Paris FC","Toulouse":"Toulouse","Brest":"Brest","Lorient":"Lorient","Nice":"Nice"
+  };
+  function norm(s) {
+    s = String(s == null ? "" : s).toLowerCase().trim();
+    try { if (s.normalize) s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); } catch (e) {}
+    return s.replace(/&/g, " and ").replace(/[^a-z0-9\u0600-\u06ff]+/g, " ").replace(/\s+/g, " ").trim();
+  }
+  var TEAM_ALIAS = {};
+  Object.keys(TEAM_ALIAS_RAW).forEach(function (k) { TEAM_ALIAS[norm(k)] = norm(TEAM_ALIAS_RAW[k]); });
+  function canonTeam(name) { var k = norm(name); return TEAM_ALIAS[k] || k; }
+  function safeHttp(url) { return typeof url === "string" && /^https?:\/\//i.test(url) && !/placeholder|default-avatar|no-image/i.test(url); }
+  function esc(s) { return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
+  function initials(name) {
+    var s = String(name || "").trim();
+    if (/^[a-z]/i.test(s)) { var w = s.split(/\s+/); return (w.length > 1 ? w[0][0] + w[1][0] : s.slice(0,2)).toUpperCase(); }
+    return s.charAt(0) || "⚽";
+  }
+  function teamLogo(name) {
+    var k = norm(name), c = canonTeam(name);
+    if (typeof LOGOS !== "undefined" && LOGOS && LOGOS[name]) return "/_blob/" + LOGOS[name];
+    if (MEDIA.teams[k] && safeHttp(MEDIA.teams[k])) return MEDIA.teams[k];
+    if (MEDIA.teams[c] && safeHttp(MEDIA.teams[c])) return MEDIA.teams[c];
+    if (c === "barcelona" || k === "jr" || k === "fc barcelona") return BARCA_CREST;
+    return "";
+  }
+  function neutralLogoHTML(name, size) {
+    size = size || 40;
+    return '<span aria-label="' + esc(name) + '" title="' + esc(name) + '" style="width:' + size + 'px;height:' + size + 'px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;background:#e9edf2;color:#5b6572;font-size:' + Math.max(10, Math.round(size*.32)) + 'px;font-weight:800;flex-shrink:0">' + esc(initials(name)) + '</span>';
+  }
+  function updateTeamNodes(name, url) {
+    var wanted = canonTeam(name), nodes = document.querySelectorAll("[data-real-team]");
+    Array.prototype.forEach.call(nodes, function (el) {
+      if (canonTeam(el.getAttribute("data-real-team")) !== wanted) return;
+      var tag = String(el.tagName || "").toLowerCase();
+      if (tag === "image") {
+        el.setAttribute("href", url); try { el.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", url); } catch (e) {}
+      } else if (tag === "g" && el.getAttribute("data-real-logo-group") === "1") {
+        el.innerHTML = '<image href="' + esc(url) + '" x="0" y="0" width="100" height="114" preserveAspectRatio="xMidYMid meet"/>';
+      } else {
+        el.innerHTML = '<img alt="' + esc(name) + '" src="' + esc(url) + '" style="width:100%;height:100%;object-fit:contain;display:block" referrerpolicy="no-referrer">';
+        el.style.background = "#fff";
+      }
+    });
+  }
+  function saveTeamLogo(name, url, repaint) {
+    if (!name || !safeHttp(url)) return;
+    var k = norm(name), c = canonTeam(name), changed = MEDIA.teams[k] !== url || MEDIA.teams[c] !== url;
+    MEDIA.teams[k] = url; MEDIA.teams[c] = url;
+    Object.keys(TEAM_ALIAS).forEach(function (alias) { if (TEAM_ALIAS[alias] === c) MEDIA.teams[alias] = url; });
+    if (changed) { sv(MEDIA_KEY, MEDIA); if (repaint !== false) updateTeamNodes(name, url); }
+  }
+  function firstLogo(obj) {
+    if (!obj || typeof obj !== "object") return "";
+    if (safeHttp(obj.logo)) return obj.logo;
+    if (Array.isArray(obj.logos)) for (var i=0;i<obj.logos.length;i++) {
+      var l=obj.logos[i]; if (l && safeHttp(l.href)) return l.href; if (l && safeHttp(l.url)) return l.url;
+    }
+    return "";
+  }
+  function collectESPNLogos(json) {
+    var found = 0;
+    function walk(o) {
+      if (!o || typeof o !== "object") return;
+      if (Array.isArray(o)) { for (var ai=0;ai<o.length;ai++) walk(o[ai]); return; }
+      var t = o.team && typeof o.team === "object" ? o.team : null;
+      if (t) { var tn=t.displayName||t.name||t.shortDisplayName||t.abbreviation, tu=firstLogo(t); if (tn&&tu) { saveTeamLogo(tn,tu,false); found++; } }
+      if (!t && (o.displayName||o.name) && (o.logos||o.logo)) {
+        var n=o.displayName||o.name, u=firstLogo(o); if (n&&u&&(o.uid||o.id||o.abbreviation)) { saveTeamLogo(n,u,false); found++; }
+      }
+      Object.keys(o).forEach(function (k) { if (k !== "team" || !t) walk(o[k]); });
+    }
+    walk(json);
+    if (found) { sv(MEDIA_KEY,MEDIA); var nodes=document.querySelectorAll("[data-real-team]"); Array.prototype.forEach.call(nodes,function(el){var u=teamLogo(el.getAttribute("data-real-team"));if(u)updateTeamNodes(el.getAttribute("data-real-team"),u);}); }
+  }
+  window.__BLAUGRANA_CACHE_TEAM_LOGOS = collectESPNLogos;
+
+  badge = function (name, size) {
+    size = size || 40; var u = teamLogo(name);
+    if (u) return '<img data-real-team="' + esc(name) + '" alt="' + esc(name) + '" src="' + esc(u) + '" width="' + size + '" height="' + Math.round(size*1.14) + '" style="object-fit:contain;display:inline-block" referrerpolicy="no-referrer">';
+    return '<span data-real-team="' + esc(name) + '">' + neutralLogoHTML(name,size) + '</span>';
+  };
+  crest = function (f, size) {
+    size = size || 40; var name = String(f).indexOf("jr") > -1 ? "برشلونة" : String(f), u = teamLogo(name);
+    if (u) return '<img data-real-team="' + esc(name) + '" alt="' + esc(name) + '" src="' + esc(u) + '" width="' + size + '" height="' + Math.round(size*1.12) + '" style="object-fit:contain;display:inline-block;vertical-align:middle" referrerpolicy="no-referrer">';
+    return neutralLogoHTML(name,size);
+  };
+  CR = crest("url(#jr)",30); if ($("tlg")) $("tlg").innerHTML = crest("url(#jr)",30);
+  mono = function (name, size) {
+    size = size || 40; var d=h("span","tc"); d.setAttribute("data-real-team",name);
+    d.style.cssText="width:"+size+"px;height:"+Math.round(size*1.14)+"px;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;background:#fff;border-radius:7px";
+    var u=teamLogo(name);
+    if (u) { var im=h("img"); im.src=u; im.alt=name; im.loading="lazy"; im.referrerPolicy="no-referrer"; im.style.cssText="width:100%;height:100%;object-fit:contain;display:block"; im.onerror=function(){im.remove();d.innerHTML=neutralLogoHTML(name,size);}; d.appendChild(im); }
+    else d.innerHTML=neutralLogoHTML(name,size);
+    return d;
+  };
+  crc = function (name) { return mono(name,22); };
+  bAt = function (name,x,y,width) {
+    width=width||100; var u=teamLogo(name);
+    var inner=u?'<image href="'+esc(u)+'" x="0" y="0" width="100" height="114" preserveAspectRatio="xMidYMid meet"/>':'<g><path d="M8 8h84v52c0 28-22 42-42 50C30 102 8 88 8 60z" fill="#e9edf2" stroke="#aeb8c4" stroke-width="4"/><text x="50" y="67" font-size="28" font-weight="800" text-anchor="middle" fill="#687586" font-family="Arial,sans-serif">'+esc(initials(name))+'</text></g>';
+    return '<g data-real-team="'+esc(name)+'" data-real-logo-group="1" transform="translate('+x+','+y+') scale('+(width/100)+')">'+inner+'</g>';
+  };
+  shd = function (x,y,scale,fill) {
+    if (String(fill).indexOf("jr")>-1) return bAt("برشلونة",x,y,30*scale);
+    return '<g transform="translate('+x+','+y+') scale('+scale+')"><path d="M2 2h26v16c0 8-7 13-13 15C9 31 2 26 2 18z" fill="#e9edf2" stroke="#aeb8c4" stroke-width="2"/></g>';
+  };
+  resM = function (m) {
+    var b=m.s[0],o=m.s[1],w=b>o?"فوز":b<o?"خسارة":"تعادل",L=m.h?[b,o]:[o,b],N=m.h?["برشلونة",m.o]:[m.o,"برشلونة"];
+    return S0+tx(200,46,CN[m.c],20,"#ffd75e")+tx(200,72,fdt(m.t),14,"#fff",400)+bAt(N[0],48,100,100)+bAt(N[1],250,100,100)+tx(100,250,N[0],18)+tx(300,250,N[1],18)+tx(168,200,L[0],52)+tx(232,200,L[1],52)+tx(200,196,"-",30,"#fff",400)+'<rect x="150" y="300" width="100" height="34" rx="17" fill="rgba(0,0,0,.35)"/>'+tx(200,324,w,18)+"</svg>";
+  };
+  nextM = function (m) {
+    var N=m.h?["برشلونة",m.o]:[m.o,"برشلونة"];
+    return S0+tx(200,44,CN[m.c]+" · المباراة القادمة",18,"#ffd75e")+tx(200,70,fdt(m.t),14,"#fff",400)+bAt(N[0],48,90,100)+bAt(N[1],250,90,100)+tx(200,175,"VS",28)+tx(100,240,N[0],17)+tx(300,240,N[1],17)+'<text data-cd="'+esc(m.t)+'" x="200" y="310" font-size="36" fill="#fff" font-weight="800" direction="ltr">--</text>'+(m.p?tx(200,360,"برشلونة "+m.p[0]+"% · تعادل "+m.p[1]+"% · الخصم "+m.p[2]+"%",13,"#fff",400):"")+"</svg>";
+  };
+  clubM = function (c) { return S0+bAt(c.n,130,50,140)+tx(200,250,c.n,30)+tx(200,285,c.lg,16,"#ffd75e",400)+tx(200,330,"المركز "+(c.i+1)+" · "+c.t[4]+" نقطة · "+c.t[1]+"ف "+c.t[2]+"ت "+c.t[3]+"خ",16,"#fff",400)+"</svg>"; };
+
+  var PLAYER_QUERY = {
+    1:"Joan Garcia",13:"Wojciech Szczesny",25:"Dominik Livakovic",2:"Joao Cancelo",3:"Alejandro Balde",5:"Pau Cubarsi",12:"Xavi Espart",
+    15:"Andreas Christensen",18:"Gerard Martin",23:"Jules Kounde",24:"Eric Garcia",4:"Brian Farinas",6:"Gavi",7:"Fermin Lopez",8:"Pedri",16:"Rodri",
+    20:"Dani Olmo",21:"Frenkie de Jong",22:"Marc Bernal",9:"Gabriel Jesus",10:"Lamine Yamal",11:"Raphinha",14:"Karim Adeyemi",17:"Anthony Gordon",
+    19:"Roony Bardghji",27:"Jesse Bisuwo",29:"Hamza Abdelkarim"
+  };
+  function playerImage(id) { id=String(id); if(PH&&PH[id])return PH[id]; if(DPH&&DPH[id])return "/_blob/"+DPH[id]; return MEDIA.players[id]||""; }
+  function neutralPlayerSVG() { return '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="12" fill="#eef1f5"/><circle cx="50" cy="35" r="18" fill="#b7c0cc"/><path d="M16 100c2-24 15-38 34-38s32 14 34 38" fill="#b7c0cc"/></svg>'; }
+  avSvg = neutralPlayerSVG;
+  function updatePlayerNodes(id,url) {
+    var nodes=document.querySelectorAll("[data-real-player-photo]");
+    Array.prototype.forEach.call(nodes,function(el){
+      if(String(el.getAttribute("data-real-player-photo"))!==String(id))return;
+      var tag=String(el.tagName||"").toLowerCase();
+      if(tag==="image"){el.setAttribute("href",url);try{el.setAttributeNS("http://www.w3.org/1999/xlink","xlink:href",url);}catch(e){}el.setAttribute("opacity","1");}
+      else {if((PH&&PH[id])||(DPH&&DPH[id]))return;el.style.backgroundImage='url("'+url.replace(/"/g,"%22")+'")';el.style.backgroundSize="cover";el.style.backgroundPosition="center 25%";el.style.backgroundColor="#eef1f5";el.innerHTML="";}
+    });
+  }
+  function usePlayerImage(id,url,recordFailure) {
+    return new Promise(function(resolve){
+      if(!safeHttp(url)||(PH&&PH[id])||(DPH&&DPH[id])){resolve(false);return;}
+      var tester=new Image();
+      tester.onload=function(){MEDIA.players[String(id)]=url;delete MEDIA.playerMiss[String(id)];sv(MEDIA_KEY,MEDIA);updatePlayerNodes(id,url);resolve(true);};
+      tester.onerror=function(){if(recordFailure!==false){MEDIA.playerMiss[String(id)]=Date.now();sv(MEDIA_KEY,MEDIA);}resolve(false);};
+      tester.src=url;
+    });
+  }
+  av = function (p,size) {
+    var a=h("div","av");if(size)a.style.width=a.style.height=size+"px";a.setAttribute("data-real-player-photo",String(p[0]));
+    var u=playerImage(p[0]);if(u){a.style.backgroundImage='url("'+u.replace(/"/g,"%22")+'")';a.style.backgroundSize="cover";a.style.backgroundPosition="center 25%";}else{a.innerHTML=neutralPlayerSVG(p);requestPlayerPhoto(p[0]);}return a;
+  };
+  sAv = function (p) {
+    var d=h("div");d.style.cssText="width:100%;height:100%";d.setAttribute("data-real-player-photo",String(p[0]));var u=playerImage(p[0]);
+    if(u){d.style.backgroundImage='url("'+u.replace(/"/g,"%22")+'")';d.style.backgroundSize="cover";d.style.backgroundPosition="center 25%";}else{d.innerHTML=neutralPlayerSVG(p);requestPlayerPhoto(p[0]);}return d;
+  };
+  plM = function (p,label,sub) {
+    var id=String(p[0]),u=playerImage(p[0]);
+    var fallback=neutralPlayerSVG(p).replace('<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">','<svg x="100" y="70" width="200" height="200" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">');
+    var real='<image data-real-player-photo="'+id+'" href="'+esc(u||"")+'" x="100" y="70" width="200" height="200" preserveAspectRatio="xMidYMid slice" opacity="'+(u?"1":"0")+'"/>';
+    if(!u)requestPlayerPhoto(p[0]);
+    return S0+'<clipPath id="cc"><circle cx="200" cy="170" r="100"/></clipPath>'+tx(200,40,label,20,"#ffd75e")+'<circle cx="200" cy="170" r="106" fill="none" stroke="#ffc83d" stroke-width="4"/><g clip-path="url(#cc)">'+fallback+real+'</g>'+tx(200,320,p[1],30)+tx(200,352,sub,15,"#dfe6ff",400)+"</svg>";
+  };
+
+  var playerQueue=[],queuedPlayers={},playerBusy=false,nextPlayerRequestAt=0,playerQueueTimer=null;
+  var wikiPlayerLookupPending=true, deferredPlayerRequests={};
+  function playerNameMatch(expected,candidate) {
+    var a=norm(expected),b=norm(candidate);if(!a||!b)return false;if(a===b)return true;
+    var aa=a.split(" "),bb=b.split(" ");return aa.every(function(word){return bb.indexOf(word)>=0;})&&bb.length<=aa.length+1;
+  }
+  function requestPlayerPhoto(id) {
+    id=String(id);if(playerImage(id)||queuedPlayers[id])return;
+    if(!PLAYER_QUERY[id])return;
+    if(wikiPlayerLookupPending){deferredPlayerRequests[id]=true;return;}
+    var missAt=+MEDIA.playerMiss[id]||0;if(missAt&&Date.now()-missAt<24*60*60*1000)return;
+    queuedPlayers[id]=true;playerQueue.push(id);if(playerQueueTimer)clearTimeout(playerQueueTimer);playerQueueTimer=setTimeout(runPlayerQueue,300);
+  }
+  function runPlayerQueue() {
+    if(playerBusy||!playerQueue.length)return;
+    var wait=Math.max(0,nextPlayerRequestAt-Date.now());if(wait>0){playerQueueTimer=setTimeout(runPlayerQueue,wait);return;}
+    var id=playerQueue.shift(),query=PLAYER_QUERY[id];playerBusy=true;nextPlayerRequestAt=Date.now()+2500;
+    var controller=typeof AbortController!=="undefined"?new AbortController():null,timer=controller?setTimeout(function(){controller.abort();},12000):null;
+    fetch("https://www.thesportsdb.com/api/v1/json/123/searchplayers.php?p="+encodeURIComponent(query.replace(/\s+/g,"_")),{method:"GET",cache:"force-cache",signal:controller?controller.signal:undefined})
+      .then(function(resp){if(!resp.ok)throw new Error("player image HTTP "+resp.status);return resp.json();})
+      .then(function(data){var list=Array.isArray(data.player)?data.player:[],found=null;for(var i=0;i<list.length;i++){if(playerNameMatch(query,list[i].strPlayer)){found=list[i];break;}}
+        var url=found&&(safeHttp(found.strThumb)?found.strThumb:found.strCutout);if(safeHttp(url))usePlayerImage(id,url);else{MEDIA.playerMiss[id]=Date.now();sv(MEDIA_KEY,MEDIA);}
+      }).catch(function(err){console.warn("Blaugrana player photo lookup failed:",id,err&&err.message);MEDIA.playerMiss[id]=Date.now()-24*60*60*1000+10*60*1000;sv(MEDIA_KEY,MEDIA);})
+      .finally(function(){if(timer)clearTimeout(timer);playerBusy=false;queuedPlayers[id]=false;if(playerQueue.length)playerQueueTimer=setTimeout(runPlayerQueue,Math.max(50,nextPlayerRequestAt-Date.now()));});
+  }
+  function cacheCurrentMatchLogos() {
+    if(!Array.isArray(CAL))return;
+    CAL.forEach(function(m){
+      if(m.homeName&&m.homeLogo)saveTeamLogo(m.homeName,m.homeLogo,false);
+      if(m.awayName&&m.awayLogo)saveTeamLogo(m.awayName,m.awayLogo,false);
+      if(m.h&&m.o&&m.homeLogo)saveTeamLogo("برشلونة",m.homeLogo,false);
+      if(m.h&&m.o&&m.awayLogo)saveTeamLogo(m.o,m.awayLogo,false);
+      if(!m.h&&m.o&&m.homeLogo)saveTeamLogo(m.o,m.homeLogo,false);
+      if(!m.h&&m.o&&m.awayLogo)saveTeamLogo("برشلونة",m.awayLogo,false);
+    });
+    sv(MEDIA_KEY,MEDIA);
+  }
+  if(typeof refreshMatchSurfaces==="function"){
+    var oldRefreshMatchSurfacesV9=refreshMatchSurfaces;
+    refreshMatchSurfaces=function(){try{cacheCurrentMatchLogos();}catch(e){}return oldRefreshMatchSurfacesV9.apply(this,arguments);};
+  }
+  cacheCurrentMatchLogos();
+  function loadWikiPlayerPhotos() {
+    var ids=Object.keys(PLAYER_QUERY), titleToId={};
+    ids.forEach(function(id){titleToId[norm(PLAYER_QUERY[id])]=id;});
+    var titles=ids.map(function(id){return PLAYER_QUERY[id].replace(/\s+/g,"_");});
+    var url="https://en.wikipedia.org/w/api.php?action=query&format=json&prop=pageimages&piprop=thumbnail&pithumbsize=480&redirects=1&origin=*&titles="+encodeURIComponent(titles.join("|"));
+    var controller=typeof AbortController!=="undefined"?new AbortController():null;
+    var timer=controller?setTimeout(function(){controller.abort();},10000):null;
+    return fetch(url,{method:"GET",cache:"force-cache",signal:controller?controller.signal:undefined})
+      .then(function(resp){if(!resp.ok)throw new Error("Wikipedia image HTTP "+resp.status);return resp.json();})
+      .then(function(data){
+        var q=data&&data.query?data.query:{},aliases=[];
+        (q.normalized||[]).concat(q.redirects||[]).forEach(function(a){if(a&&a.from&&a.to)aliases.push(a);});
+        aliases.forEach(function(a){var id=titleToId[norm(a.from)];if(id)titleToId[norm(a.to)]=id;});
+        var tasks=[],pages=q.pages||{};
+        Object.keys(pages).forEach(function(k){var pg=pages[k],id=titleToId[norm(pg.title)];if(!id&&pg.original)id=titleToId[norm(pg.original.title)];
+          if(id&&pg.thumbnail&&safeHttp(pg.thumbnail.source))tasks.push(usePlayerImage(id,pg.thumbnail.source,false));
+        });
+        return Promise.all(tasks);
+      })
+      .catch(function(err){console.warn("Blaugrana Wikipedia player photos unavailable:",err&&err.message);})
+      .finally(function(){if(timer)clearTimeout(timer);wikiPlayerLookupPending=false;Object.keys(deferredPlayerRequests).forEach(function(id){if(deferredPlayerRequests[id])requestPlayerPhoto(id);});deferredPlayerRequests={};});
+  }
+  loadWikiPlayerPhotos();
+  if(Array.isArray(SQ))SQ.forEach(function(p){requestPlayerPhoto(p[0]);});
+  try{if(typeof grid==="function")grid();}catch(e){}
+  try{if(typeof stories==="function")stories();}catch(e){}
+  try{if(typeof rbar==="function")rbar();}catch(e){}
+  try{if(typeof rhome==="function")rhome();}catch(e){}
+  try{if(typeof renderMatches==="function")renderMatches();}catch(e){}
 })();
 
 </script>
