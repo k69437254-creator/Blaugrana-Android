@@ -1706,15 +1706,14 @@ go(curId);
           changed = true;
         });
 
-        if (changed) {
+                if (changed) {
           CAL = updated;
 
           try {
-  rcal();
-  stories();
-} catch (e) {
-  console.error("Blaugrana render error:", e);
-}
+            rcal();
+            stories();
+          } catch (e) {
+            console.error("Blaugrana render error:", e);
           }
         } else {
           console.warn(
