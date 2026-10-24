@@ -1712,10 +1712,11 @@ go(curId);
           CAL = updated;
 
           try {
-            renderMatches();
-            stories();
-          } catch (e) {
-            console.error("Blaugrana render error:", e);
+  rcal();
+  stories();
+} catch (e) {
+  console.error("Blaugrana render error:", e);
+}
           }
         } else {
           console.warn(
