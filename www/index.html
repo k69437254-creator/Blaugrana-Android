@@ -1195,7 +1195,6 @@ function renderMatches(){var f=$("mf"),v=$("mv"),b=$("mb");if(!b)return;f.innerH
   else if(mVw==="list"){var g=h("div","mg");arr.forEach(function(m){g.appendChild(mrow(m))});b.appendChild(g)}
   else{var tl=h("div","tlv");arr.forEach(function(m){tl.appendChild(h("div","dt2",new Date(m.t).toLocaleDateString("ar-IQ",{weekday:"long",day:"numeric",month:"long"})));tl.appendChild(scard(m))});b.appendChild(tl)}}
  sect("القادمة",up);sect("النتائج",fin);if(!up.length&&!fin.length)b.appendChild(h("div","msg","لا مباريات مطابقة."))}
-rcal=function(){renderMatches()};
 
 /* الدوري والترتيب */
 var lgView=ld("bh7_lv","table");
